@@ -1,0 +1,11 @@
+# Eclipse build files
+bin/
+*.class
+.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
