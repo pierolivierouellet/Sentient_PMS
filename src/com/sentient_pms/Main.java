@@ -6,6 +6,8 @@ import java.util.Scanner;
 public class Main {
 
     public static void main(String[] args) {
+    	
+    	new HotelUI();
 
         Scanner scanner = new Scanner(System.in);
         Hotel hotel = new Hotel();

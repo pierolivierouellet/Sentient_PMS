@@ -140,4 +140,9 @@ public class Hotel {
             System.out.println(room);
         }
     }
+    
+    public List<Room> getRooms() {
+        return rooms;
+    }
+    
 }
