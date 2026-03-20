@@ -29,47 +29,43 @@ public class Hotel {
         return null;
     }
 
-    // 🔥 NEW: DATE CONFLICT CHECK
     private boolean isRoomBooked(Room room, LocalDate checkIn, LocalDate checkOut) {
-
         for (Reservation r : reservations) {
-
             if (r.getRoom().equals(room)) {
 
                 LocalDate existingCheckIn = r.getCheckInDate();
                 LocalDate existingCheckOut = r.getCheckOutDate();
 
-                // overlap logic
                 if (checkIn.isBefore(existingCheckOut) && checkOut.isAfter(existingCheckIn)) {
                     return true;
                 }
             }
         }
-
         return false;
     }
 
-    public void createReservation(String guestName, int roomNumber,
-                                  LocalDate checkIn, LocalDate checkOut) {
+    public void createReservation(String firstName, String lastName, int roomNumber,
+            LocalDate checkIn, LocalDate checkOut) {
 
-        Room room = findRoomByNumber(roomNumber);
+Room room = findRoomByNumber(roomNumber);
 
-        if (room == null) {
-            System.out.println("Room not found.");
-            return;
-        }
+if (room == null) {
+System.out.println("Room not found.");
+return;
+}
 
-        // 🔥 UPDATED CHECK (date-based)
-        if (isRoomBooked(room, checkIn, checkOut)) {
-            System.out.println("Room already booked for these dates.");
-            return;
-        }
+if (isRoomBooked(room, checkIn, checkOut)) {
+System.out.println("Room already booked for these dates.");
+return;
+}
 
-        Reservation reservation = new Reservation(guestName, room, checkIn, checkOut);
-        reservations.add(reservation);
+Guest guest = new Guest(firstName, lastName);
 
-        System.out.println("Reservation created successfully!");
-    }
+Reservation reservation = new Reservation(guest, room, checkIn, checkOut);
+reservations.add(reservation);
+
+System.out.println("Reservation created successfully!");
+}
 
     public void viewReservations() {
         if (reservations.isEmpty()) {
@@ -82,7 +78,7 @@ public class Hotel {
         }
     }
 
-    public void checkIn(int reservationId) {
+    public void checkIn(long reservationId) {
         for (Reservation r : reservations) {
             if (r.getId() == reservationId) {
 
@@ -103,7 +99,7 @@ public class Hotel {
         System.out.println("Reservation not found.");
     }
 
-    public void checkOut(int reservationId) {
+    public void checkOut(long reservationId) {
         for (Reservation r : reservations) {
             if (r.getId() == reservationId) {
 
@@ -134,15 +130,55 @@ public class Hotel {
         }
     }
 
-    // 🔥 NEW: VIEW ALL ROOMS
     public void viewAllRooms() {
         for (Room room : rooms) {
             System.out.println(room);
         }
     }
-    
+
+    // ✅ REQUIRED FOR UI
     public List<Room> getRooms() {
         return rooms;
     }
+
+    public List<Reservation> getReservations() {
+        return reservations;
+    }
     
+    public List<Reservation> getPastReservations() {
+        List<Reservation> result = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+
+        for (Reservation r : reservations) {
+            if (r.getCheckOutDate().isBefore(today)) {
+                result.add(r);
+            }
+        }
+        return result;
+    }
+
+    public List<Reservation> getUpcomingReservations() {
+        List<Reservation> result = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+
+        for (Reservation r : reservations) {
+            if (r.getCheckInDate().isAfter(today)) {
+                result.add(r);
+            }
+        }
+        return result;
+    }
+
+    public List<Reservation> getTodayReservations() {
+        List<Reservation> result = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+
+        for (Reservation r : reservations) {
+            if ((r.getCheckInDate().isEqual(today)) ||
+                (r.getCheckOutDate().isEqual(today))) {
+                result.add(r);
+            }
+        }
+        return result;
+    }
 }

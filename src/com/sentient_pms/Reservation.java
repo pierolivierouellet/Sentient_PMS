@@ -1,57 +1,56 @@
 package com.sentient_pms;
 
 import java.time.LocalDate;
+import java.util.Random;
 
 public class Reservation {
 
-    private static int counter = 1;
+    private static Random random = new Random();
 
-    private int id;
-    private String guestName;
+    private long id;
+    private Guest guest;
     private Room room;
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
-    private boolean checkedIn;
+    private String status; // NEW
 
-    public Reservation(String guestName, Room room,
+    public Reservation(Guest guest, Room room,
                        LocalDate checkInDate, LocalDate checkOutDate) {
 
-        this.id = counter++;
-        this.guestName = guestName;
+        this.id = 1000000000L + (long)(random.nextDouble() * 9000000000L);
+        this.guest = guest;
         this.room = room;
         this.checkInDate = checkInDate;
         this.checkOutDate = checkOutDate;
-        this.checkedIn = false;
+        this.status = "BOOKED";
     }
 
-    public int getId() { return id; }
-    public String getGuestName() { return guestName; }
+    public long getId() { return id; }
     public Room getRoom() { return room; }
-    public boolean isCheckedIn() { return checkedIn; }
+    public Guest getGuest() { return guest; }
 
-    public LocalDate getCheckInDate() {
-        return checkInDate;
-    }
+    public LocalDate getCheckInDate() { return checkInDate; }
+    public LocalDate getCheckOutDate() { return checkOutDate; }
 
-    public LocalDate getCheckOutDate() {
-        return checkOutDate;
+    public boolean isCheckedIn() {
+        return status.equals("CHECKED_IN");
     }
 
     public void checkIn() {
-        checkedIn = true;
+        status = "CHECKED_IN";
     }
 
     public void checkOut() {
-        checkedIn = false;
+        status = "CHECKED_OUT"; // ✅ FIXED
     }
 
     @Override
     public String toString() {
         return "ID: " + id +
-                " | Guest: " + guestName +
+                " | Guest: " + guest.getFullName() +
                 " | Room: " + room.getRoomNumber() +
                 " | Check-in: " + checkInDate +
                 " | Check-out: " + checkOutDate +
-                " | Status: " + (checkedIn ? "Checked-in" : "Not checked-in");
+                " | Status: " + status;
     }
 }
