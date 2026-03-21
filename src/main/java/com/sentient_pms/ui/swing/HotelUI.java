@@ -1,4 +1,12 @@
-package com.sentient_pms;
+package com.sentient_pms.ui.swing;
+
+import com.sentient_pms.model.Guest;
+import com.sentient_pms.model.RoomStatus;
+import com.sentient_pms.repository.ReservationRepository;
+import com.sentient_pms.repository.RoomRepository;
+import com.sentient_pms.model.Reservation;
+import com.sentient_pms.model.Room;
+import com.sentient_pms.service.ReservationService;
 
 import javax.swing.*;
 import java.awt.*;
@@ -7,12 +15,17 @@ import java.util.List;
 
 public class HotelUI {
 
-    private Hotel hotel;
+    private RoomRepository roomRepository;
+    private ReservationRepository reservationRepository;
+    private ReservationService reservationService;
     private JPanel outputPanel;
 
     public HotelUI() {
 
-        hotel = new Hotel();
+        roomRepository = new RoomRepository();
+        reservationRepository = new ReservationRepository();
+        reservationService = new ReservationService(reservationRepository, roomRepository);
+
 
         JFrame frame = new JFrame("Sentient PMS");
         frame.setSize(800, 500);
@@ -40,7 +53,7 @@ public class HotelUI {
         // VIEW ROOMS
         roomsBtn.addActionListener(e -> {
             outputPanel.removeAll();
-            for (Room r : hotel.getRooms()) {
+            for (Room r : roomRepository.getRooms()) {
                 outputPanel.add(new JLabel(r.toString()));
             }
             refreshUI();
@@ -66,9 +79,9 @@ public class HotelUI {
 
             List<Reservation> list = null;
 
-            if (choice == 0) list = hotel.getPastReservations();
-            if (choice == 1) list = hotel.getTodayReservations();
-            if (choice == 2) list = hotel.getUpcomingReservations();
+            if (choice == 0) list = this.reservationRepository.getPastReservations();
+            if (choice == 1) list = this.reservationRepository.getTodayReservations();
+            if (choice == 2) list = this.reservationRepository.getUpcomingReservations();
 
             if (list != null) {
 
@@ -87,7 +100,7 @@ public class HotelUI {
                             actionBtn = new JButton("Check-In");
 
                             actionBtn.addActionListener(ev -> {
-                                hotel.checkIn(r.getId());
+                                reservationRepository.checkIn(r.getId());
                                 refreshTodayView();
                             });
 
@@ -105,7 +118,7 @@ public class HotelUI {
                                 );
 
                                 if (confirm == JOptionPane.YES_OPTION) {
-                                    hotel.checkOut(r.getId());
+                                    reservationRepository.checkOut(r.getId());
                                     refreshTodayView();
                                 }
                             });
@@ -134,7 +147,7 @@ public class HotelUI {
                 LocalDate in = LocalDate.parse(JOptionPane.showInputDialog("Check-in (YYYY-MM-DD):"));
                 LocalDate out = LocalDate.parse(JOptionPane.showInputDialog("Check-out (YYYY-MM-DD):"));
 
-                hotel.createReservation(first, last, room, in, out);
+                this.reservationService.createReservation(first, last, room, in, out);
 
                 outputPanel.removeAll();
                 outputPanel.add(new JLabel("Reservation created."));
@@ -151,12 +164,11 @@ public class HotelUI {
         checkInBtn.addActionListener(e -> {
             try {
                 long id = Long.parseLong(JOptionPane.showInputDialog("Reservation ID:"));
-                hotel.checkIn(id);
+                reservationRepository.checkIn(id);
 
                 outputPanel.removeAll();
                 outputPanel.add(new JLabel("Checked in."));
                 refreshUI();
-
             } catch (Exception ex) {
                 outputPanel.removeAll();
                 outputPanel.add(new JLabel("Invalid input."));
@@ -177,7 +189,7 @@ public class HotelUI {
                 );
 
                 if (confirm == JOptionPane.YES_OPTION) {
-                    hotel.checkOut(id);
+                    reservationRepository.checkOut(id);
 
                     outputPanel.removeAll();
                     outputPanel.add(new JLabel("Checked out."));
@@ -195,7 +207,7 @@ public class HotelUI {
         inHouseBtn.addActionListener(e -> {
             outputPanel.removeAll();
 
-            for (Reservation r : hotel.getReservations()) {
+            for (Reservation r : reservationRepository.getReservations()) {
                 if (r.isCheckedIn()) {
                     outputPanel.add(new JLabel(r.toString()));
                 }
@@ -222,7 +234,7 @@ public class HotelUI {
                 );
 
                 if (choice >= 0) {
-                    hotel.setRoomStatus(room, RoomStatus.valueOf(options[choice]));
+                    roomRepository.setRoomStatus(room, RoomStatus.valueOf(options[choice]));
                 }
 
                 outputPanel.removeAll();
@@ -242,7 +254,7 @@ public class HotelUI {
                 int start = Integer.parseInt(JOptionPane.showInputDialog("Start room:"));
                 int end = Integer.parseInt(JOptionPane.showInputDialog("End room:"));
 
-                hotel.cleanRoomsRange(start, end);
+                roomRepository.cleanRoomsRange(start, end);
 
                 outputPanel.removeAll();
                 outputPanel.add(new JLabel("Rooms cleaned."));
@@ -262,7 +274,7 @@ public class HotelUI {
             gridFrame.setSize(400, 400);
             gridFrame.setLayout(new GridLayout(0, 5));
 
-            for (Room room : hotel.getRooms()) {
+            for (Room room : roomRepository.getRooms()) {
 
                 JButton btn = new JButton(String.valueOf(room.getRoomNumber()));
 
@@ -323,7 +335,7 @@ public class HotelUI {
 
         outputPanel.removeAll();
 
-        List<Reservation> list = hotel.getTodayReservations();
+        List<Reservation> list = reservationRepository.getTodayReservations();
 
         for (Reservation r : list) {
 
@@ -338,7 +350,7 @@ public class HotelUI {
                 actionBtn = new JButton("Check-In");
 
                 actionBtn.addActionListener(ev -> {
-                    hotel.checkIn(r.getId());
+                    reservationRepository.checkIn(r.getId());
                     refreshTodayView();
                 });
 
@@ -356,7 +368,7 @@ public class HotelUI {
                     );
 
                     if (confirm == JOptionPane.YES_OPTION) {
-                        hotel.checkOut(r.getId());
+                        reservationRepository.checkOut(r.getId());
                         refreshTodayView();
                     }
                 });
@@ -373,5 +385,4 @@ public class HotelUI {
         refreshUI();
     }
 }
-        
-        
+

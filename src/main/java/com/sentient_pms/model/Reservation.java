@@ -1,4 +1,4 @@
-package com.sentient_pms;
+package com.sentient_pms.model;
 
 import java.time.LocalDate;
 import java.util.Random;

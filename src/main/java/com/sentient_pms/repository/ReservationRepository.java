@@ -1,31 +1,18 @@
-package com.sentient_pms;
+package com.sentient_pms.repository;
+
+import com.sentient_pms.model.Guest;
+import com.sentient_pms.model.Reservation;
+import com.sentient_pms.model.Room;
+import com.sentient_pms.model.RoomStatus;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Hotel {
+public class ReservationRepository {
+    List<Reservation> reservations = new ArrayList<Reservation>();
 
-    private List<Reservation> reservations = new ArrayList<>();
-    private List<Room> rooms = new ArrayList<>();
-
-    public Hotel() {
-        initializeRooms();
-    }
-
-    private void initializeRooms() {
-        for (int i = 101; i <= 130; i++) {
-            rooms.add(new Room(i, RoomType.STANDARD));
-        }
-    }
-
-    public Room findRoomByNumber(int roomNumber) {
-        for (Room room : rooms) {
-            if (room.getRoomNumber() == roomNumber) {
-                return room;
-            }
-        }
-        return null;
+    public ReservationRepository() {
     }
 
     // ✅ FIXED LOGIC (same-day turnover allowed)
@@ -49,28 +36,6 @@ public class Hotel {
         }
 
         return false;
-    }
-
-    public void createReservation(String firstName, String lastName, int roomNumber,
-                                  LocalDate checkIn, LocalDate checkOut) {
-
-        Room room = findRoomByNumber(roomNumber);
-
-        if (room == null) {
-            System.out.println("Room not found.");
-            return;
-        }
-
-        if (isRoomBooked(room, checkIn, checkOut)) {
-            System.out.println("Room already booked for these dates.");
-            return;
-        }
-
-        Guest guest = new Guest(firstName, lastName);
-        Reservation reservation = new Reservation(guest, room, checkIn, checkOut);
-
-        reservations.add(reservation);
-        System.out.println("Reservation created.");
     }
 
     public void checkIn(long id) {
@@ -100,27 +65,10 @@ public class Hotel {
         }
     }
 
-    public void setRoomStatus(int roomNumber, RoomStatus status) {
-        Room room = findRoomByNumber(roomNumber);
-        if (room != null) {
-            room.setRoomStatus(status);
-        }
-    }
-
-    public void cleanRoomsRange(int start, int end) {
-        for (int i = start; i <= end; i++) {
-            Room room = findRoomByNumber(i);
-            if (room != null && room.getRoomStatus() == RoomStatus.DIRTY) {
-                room.cleanRoom();
-            }
-        }
-    }
-
-    public List<Room> getRooms() { return rooms; }
     public List<Reservation> getReservations() { return reservations; }
 
     public List<Reservation> getPastReservations() {
-        List<Reservation> result = new ArrayList<>();
+        List<Reservation> result = new ArrayList<Reservation>();
         LocalDate today = LocalDate.now();
 
         for (Reservation r : reservations) {
@@ -132,7 +80,7 @@ public class Hotel {
     }
 
     public List<Reservation> getUpcomingReservations() {
-        List<Reservation> result = new ArrayList<>();
+        List<Reservation> result = new ArrayList<Reservation>();
         LocalDate today = LocalDate.now();
 
         for (Reservation r : reservations) {
@@ -144,15 +92,19 @@ public class Hotel {
     }
 
     public List<Reservation> getTodayReservations() {
-        List<Reservation> result = new ArrayList<>();
+        List<Reservation> result = new ArrayList<Reservation>();
         LocalDate today = LocalDate.now();
 
         for (Reservation r : reservations) {
             if (r.getCheckInDate().isEqual(today) ||
-                r.getCheckOutDate().isEqual(today)) {
+                    r.getCheckOutDate().isEqual(today)) {
                 result.add(r);
             }
         }
         return result;
+    }
+
+    public void addReservation(Reservation reservation) {
+        this.reservations.add(reservation);
     }
 }
