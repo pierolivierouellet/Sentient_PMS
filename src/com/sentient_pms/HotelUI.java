@@ -8,50 +8,48 @@ import java.util.List;
 public class HotelUI {
 
     private Hotel hotel;
-    private JTextArea output;
+    private JPanel outputPanel;
 
     public HotelUI() {
 
         hotel = new Hotel();
 
         JFrame frame = new JFrame("Sentient PMS");
-        frame.setSize(700, 500);
+        frame.setSize(800, 500);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
 
-        // Output area
-        output = new JTextArea();
-        output.setEditable(false);
-        JScrollPane scrollPane = new JScrollPane(output);
+        // OUTPUT PANEL (supports buttons)
+        outputPanel = new JPanel();
+        outputPanel.setLayout(new BoxLayout(outputPanel, BoxLayout.Y_AXIS));
+        JScrollPane scrollPane = new JScrollPane(outputPanel);
 
-        // Buttons panel
-        JPanel panel = new JPanel(new GridLayout(3, 3));
+        JPanel panel = new JPanel(new GridLayout(4, 3));
 
         JButton roomsBtn = new JButton("View Rooms");
         JButton reservationMenuBtn = new JButton("Reservations");
         JButton createBtn = new JButton("Create Reservation");
-        JButton checkInBtn = new JButton("Check-In");
-        JButton checkOutBtn = new JButton("Check-Out");
+        JButton checkInBtn = new JButton("Check-In (Manual)");
+        JButton checkOutBtn = new JButton("Check-Out (Manual)");
         JButton inHouseBtn = new JButton("In-House Guests");
-        JButton guestFileBtn = new JButton("Open Guest File");
+        JButton changeStatusBtn = new JButton("Change Room Status");
+        JButton batchCleanBtn = new JButton("Batch Clean Rooms");
+        JButton gridBtn = new JButton("Room Grid");
         JButton exitBtn = new JButton("Exit");
 
-        // === VIEW ROOMS ===
+        // VIEW ROOMS
         roomsBtn.addActionListener(e -> {
-            output.setText("");
+            outputPanel.removeAll();
             for (Room r : hotel.getRooms()) {
-                output.append(r + "\n");
+                outputPanel.add(new JLabel(r.toString()));
             }
+            refreshUI();
         });
 
-        // === RESERVATION MENU ===
+        // RESERVATIONS MENU
         reservationMenuBtn.addActionListener(e -> {
 
-            String[] options = {
-                    "Past Reservations",
-                    "Today's Reservations",
-                    "Upcoming Reservations"
-            };
+            String[] options = {"Past", "Today", "Upcoming"};
 
             int choice = JOptionPane.showOptionDialog(
                     null,
@@ -64,7 +62,7 @@ public class HotelUI {
                     options[0]
             );
 
-            output.setText("");
+            outputPanel.removeAll();
 
             List<Reservation> list = null;
 
@@ -72,118 +70,242 @@ public class HotelUI {
             if (choice == 1) list = hotel.getTodayReservations();
             if (choice == 2) list = hotel.getUpcomingReservations();
 
-            if (list != null && !list.isEmpty()) {
+            if (list != null) {
+
                 for (Reservation r : list) {
-                    output.append(r + "\n");
+
+                    JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT));
+                    JLabel label = new JLabel(r.toString());
+                    row.add(label);
+
+                    if (choice == 1) {
+
+                        JButton actionBtn;
+
+                        if (r.getStatus().equals("BOOKED")) {
+
+                            actionBtn = new JButton("Check-In");
+
+                            actionBtn.addActionListener(ev -> {
+                                hotel.checkIn(r.getId());
+                                refreshTodayView();
+                            });
+
+                        } else if (r.getStatus().equals("CHECKED_IN")) {
+
+                            actionBtn = new JButton("Check-Out");
+
+                            actionBtn.addActionListener(ev -> {
+
+                                int confirm = JOptionPane.showConfirmDialog(
+                                        null,
+                                        "Confirm check-out for this guest?",
+                                        "Confirm Check-Out",
+                                        JOptionPane.YES_NO_OPTION
+                                );
+
+                                if (confirm == JOptionPane.YES_OPTION) {
+                                    hotel.checkOut(r.getId());
+                                    refreshTodayView();
+                                }
+                            });
+
+                        } else {
+                            actionBtn = new JButton("Done");
+                            actionBtn.setEnabled(false);
+                        }
+
+                        row.add(actionBtn);
+                    }
+
+                    outputPanel.add(row);
                 }
-            } else {
-                output.setText("No reservations found.\n");
             }
+
+            refreshUI();
         });
 
-        // === CREATE RESERVATION ===
+        // CREATE RESERVATION
         createBtn.addActionListener(e -> {
             try {
-                String firstName = JOptionPane.showInputDialog("First name:");
-                String lastName = JOptionPane.showInputDialog("Last name:");
+                String first = JOptionPane.showInputDialog("First name:");
+                String last = JOptionPane.showInputDialog("Last name:");
                 int room = Integer.parseInt(JOptionPane.showInputDialog("Room number:"));
                 LocalDate in = LocalDate.parse(JOptionPane.showInputDialog("Check-in (YYYY-MM-DD):"));
                 LocalDate out = LocalDate.parse(JOptionPane.showInputDialog("Check-out (YYYY-MM-DD):"));
 
-                hotel.createReservation(firstName, lastName, room, in, out);
+                hotel.createReservation(first, last, room, in, out);
 
-                output.setText("Reservation processed.\n");
+                outputPanel.removeAll();
+                outputPanel.add(new JLabel("Reservation created."));
+                refreshUI();
 
             } catch (Exception ex) {
-                output.setText("Invalid input.\n");
+                outputPanel.removeAll();
+                outputPanel.add(new JLabel("Invalid input."));
+                refreshUI();
             }
         });
 
-        // === CHECK-IN ===
+        // MANUAL CHECK-IN
         checkInBtn.addActionListener(e -> {
             try {
                 long id = Long.parseLong(JOptionPane.showInputDialog("Reservation ID:"));
                 hotel.checkIn(id);
-                output.setText("Check-in attempted.\n");
+
+                outputPanel.removeAll();
+                outputPanel.add(new JLabel("Checked in."));
+                refreshUI();
+
             } catch (Exception ex) {
-                output.setText("Invalid input.\n");
+                outputPanel.removeAll();
+                outputPanel.add(new JLabel("Invalid input."));
+                refreshUI();
             }
         });
 
-        // === CHECK-OUT ===
+        // MANUAL CHECK-OUT (WITH CONFIRMATION)
         checkOutBtn.addActionListener(e -> {
             try {
                 long id = Long.parseLong(JOptionPane.showInputDialog("Reservation ID:"));
-                hotel.checkOut(id);
-                output.setText("Check-out attempted.\n");
+
+                int confirm = JOptionPane.showConfirmDialog(
+                        null,
+                        "Confirm check-out for this guest?",
+                        "Confirm Check-Out",
+                        JOptionPane.YES_NO_OPTION
+                );
+
+                if (confirm == JOptionPane.YES_OPTION) {
+                    hotel.checkOut(id);
+
+                    outputPanel.removeAll();
+                    outputPanel.add(new JLabel("Checked out."));
+                    refreshUI();
+                }
+
             } catch (Exception ex) {
-                output.setText("Invalid input.\n");
+                outputPanel.removeAll();
+                outputPanel.add(new JLabel("Invalid input."));
+                refreshUI();
             }
         });
 
-        // === IN-HOUSE GUESTS ===
+        // IN-HOUSE
         inHouseBtn.addActionListener(e -> {
-            output.setText("");
+            outputPanel.removeAll();
+
             for (Reservation r : hotel.getReservations()) {
                 if (r.isCheckedIn()) {
-                    output.append(r + "\n");
+                    outputPanel.add(new JLabel(r.toString()));
                 }
             }
+
+            refreshUI();
         });
 
-        // === OPEN GUEST FILE ===
-        guestFileBtn.addActionListener(e -> {
+        // CHANGE ROOM STATUS
+        changeStatusBtn.addActionListener(e -> {
             try {
-                long id = Long.parseLong(JOptionPane.showInputDialog("Reservation ID:"));
+                int room = Integer.parseInt(JOptionPane.showInputDialog("Room number:"));
 
-                for (Reservation r : hotel.getReservations()) {
-                    if (r.getId() == id) {
+                String[] options = {"AVAILABLE", "DIRTY", "OUT_OF_ORDER"};
+                int choice = JOptionPane.showOptionDialog(
+                        null,
+                        "Select status:",
+                        "Room Status",
+                        JOptionPane.DEFAULT_OPTION,
+                        JOptionPane.INFORMATION_MESSAGE,
+                        null,
+                        options,
+                        options[0]
+                );
 
-                        Guest g = r.getGuest();
-
-                        JTextArea area = new JTextArea(g.getDetails());
-                        area.setEditable(false);
-
-                        JOptionPane.showMessageDialog(
-                                null,
-                                new JScrollPane(area),
-                                "Guest File",
-                                JOptionPane.INFORMATION_MESSAGE
-                        );
-
-                        String phone = JOptionPane.showInputDialog("Phone:");
-                        String email = JOptionPane.showInputDialog("Email:");
-                        String notes = JOptionPane.showInputDialog("Notes:");
-                        String payment = JOptionPane.showInputDialog("Payment Info:");
-
-                        if (phone != null) g.setPhone(phone);
-                        if (email != null) g.setEmail(email);
-                        if (notes != null) g.setNotes(notes);
-                        if (payment != null) g.setPaymentInfo(payment);
-
-                        output.setText("Guest updated.\n");
-                        return;
-                    }
+                if (choice >= 0) {
+                    hotel.setRoomStatus(room, RoomStatus.valueOf(options[choice]));
                 }
 
-                output.setText("Reservation not found.\n");
+                outputPanel.removeAll();
+                outputPanel.add(new JLabel("Room updated."));
+                refreshUI();
 
             } catch (Exception ex) {
-                output.setText("Invalid input.\n");
+                outputPanel.removeAll();
+                outputPanel.add(new JLabel("Invalid input."));
+                refreshUI();
             }
         });
 
-        // === EXIT ===
+        // BATCH CLEAN
+        batchCleanBtn.addActionListener(e -> {
+            try {
+                int start = Integer.parseInt(JOptionPane.showInputDialog("Start room:"));
+                int end = Integer.parseInt(JOptionPane.showInputDialog("End room:"));
+
+                hotel.cleanRoomsRange(start, end);
+
+                outputPanel.removeAll();
+                outputPanel.add(new JLabel("Rooms cleaned."));
+                refreshUI();
+
+            } catch (Exception ex) {
+                outputPanel.removeAll();
+                outputPanel.add(new JLabel("Invalid input."));
+                refreshUI();
+            }
+        });
+
+        // ROOM GRID
+        gridBtn.addActionListener(e -> {
+
+            JFrame gridFrame = new JFrame("Room Grid");
+            gridFrame.setSize(400, 400);
+            gridFrame.setLayout(new GridLayout(0, 5));
+
+            for (Room room : hotel.getRooms()) {
+
+                JButton btn = new JButton(String.valueOf(room.getRoomNumber()));
+
+                switch (room.getRoomStatus()) {
+                    case AVAILABLE:
+                        btn.setBackground(Color.GREEN);
+                        break;
+                    case OCCUPIED:
+                        btn.setBackground(Color.RED);
+                        break;
+                    case DIRTY:
+                        btn.setBackground(Color.YELLOW);
+                        break;
+                    case OUT_OF_ORDER:
+                        btn.setBackground(Color.DARK_GRAY);
+                        break;
+                }
+
+                btn.setOpaque(true);
+                btn.setBorderPainted(false);
+
+                btn.addActionListener(ev ->
+                        JOptionPane.showMessageDialog(null, room.toString())
+                );
+
+                gridFrame.add(btn);
+            }
+
+            gridFrame.setVisible(true);
+        });
+
+        // EXIT
         exitBtn.addActionListener(e -> System.exit(0));
 
-        // Add buttons
         panel.add(roomsBtn);
         panel.add(reservationMenuBtn);
         panel.add(createBtn);
         panel.add(checkInBtn);
         panel.add(checkOutBtn);
         panel.add(inHouseBtn);
-        panel.add(guestFileBtn);
+        panel.add(changeStatusBtn);
+        panel.add(batchCleanBtn);
+        panel.add(gridBtn);
         panel.add(exitBtn);
 
         frame.add(panel, BorderLayout.NORTH);
@@ -191,7 +313,65 @@ public class HotelUI {
 
         frame.setVisible(true);
     }
+
+    private void refreshUI() {
+        outputPanel.revalidate();
+        outputPanel.repaint();
+    }
+
+    private void refreshTodayView() {
+
+        outputPanel.removeAll();
+
+        List<Reservation> list = hotel.getTodayReservations();
+
+        for (Reservation r : list) {
+
+            JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            JLabel label = new JLabel(r.toString());
+            row.add(label);
+
+            JButton actionBtn;
+
+            if (r.getStatus().equals("BOOKED")) {
+
+                actionBtn = new JButton("Check-In");
+
+                actionBtn.addActionListener(ev -> {
+                    hotel.checkIn(r.getId());
+                    refreshTodayView();
+                });
+
+            } else if (r.getStatus().equals("CHECKED_IN")) {
+
+                actionBtn = new JButton("Check-Out");
+
+                actionBtn.addActionListener(ev -> {
+
+                    int confirm = JOptionPane.showConfirmDialog(
+                            null,
+                            "Confirm check-out for this guest?",
+                            "Confirm Check-Out",
+                            JOptionPane.YES_NO_OPTION
+                    );
+
+                    if (confirm == JOptionPane.YES_OPTION) {
+                        hotel.checkOut(r.getId());
+                        refreshTodayView();
+                    }
+                });
+
+            } else {
+                actionBtn = new JButton("Done");
+                actionBtn.setEnabled(false);
+            }
+
+            row.add(actionBtn);
+            outputPanel.add(row);
+        }
+
+        refreshUI();
+    }
 }
-
-
-
+        
+        

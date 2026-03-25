@@ -16,10 +16,6 @@ public class Room {
         return roomNumber;
     }
 
-    public RoomType getRoomType() {
-        return roomType;
-    }
-
     public RoomStatus getRoomStatus() {
         return roomStatus;
     }
@@ -46,8 +42,8 @@ public class Room {
         }
     }
 
-    public void setOutOfOrder() {
-        roomStatus = RoomStatus.OUT_OF_ORDER;
+    public void setRoomStatus(RoomStatus status) {
+        this.roomStatus = status;
     }
 
     @Override

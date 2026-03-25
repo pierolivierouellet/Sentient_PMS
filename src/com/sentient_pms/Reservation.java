@@ -12,7 +12,7 @@ public class Reservation {
     private Room room;
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
-    private String status; // NEW
+    private String status;
 
     public Reservation(Guest guest, Room room,
                        LocalDate checkInDate, LocalDate checkOutDate) {
@@ -32,6 +32,8 @@ public class Reservation {
     public LocalDate getCheckInDate() { return checkInDate; }
     public LocalDate getCheckOutDate() { return checkOutDate; }
 
+    public String getStatus() { return status; } // ✅ IMPORTANT
+
     public boolean isCheckedIn() {
         return status.equals("CHECKED_IN");
     }
@@ -41,7 +43,7 @@ public class Reservation {
     }
 
     public void checkOut() {
-        status = "CHECKED_OUT"; // ✅ FIXED
+        status = "CHECKED_OUT";
     }
 
     @Override
